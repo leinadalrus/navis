@@ -25,94 +25,94 @@
 
 class TCPConnector : public boost::enable_shared_from_this<TCPConnector>
 {
-	boost::asio::ip::tcp::socket _socket;
-	std::string _message;
+  boost::asio::ip::tcp::socket _socket;
+  std::string _message;
 
-	TCPConnector(boost::asio::io_context& io_context) : _socket(io_context)
-	{
-	}
+  TCPConnector(boost::asio::io_context& io_context) : _socket(io_context)
+  {
+  }
 
-	void handle()
-	{
-	}
+  void handle()
+  {
+  }
 
- public:
-	typedef boost::shared_ptr<TCPConnector> pointer;
+public:
+  typedef boost::shared_ptr<TCPConnector> pointer;
 
-	static pointer create(boost::asio::io_context& io_context)
-	{
-		return pointer(new TCPConnector(io_context));
-	}
+  static pointer create(boost::asio::io_context& io_context)
+  {
+    return pointer(new TCPConnector(io_context));
+  }
 
-	boost::asio::ip::tcp::socket& socket()
-	{
-		return this->_socket;
-	}
+  boost::asio::ip::tcp::socket& socket()
+  {
+    return this->_socket;
+  }
 
-	void start()
-	{
-		this->_message = "";
+  void start()
+  {
+    this->_message = "";
 
-		boost::asio::async_write
-				(
-						this->_socket,
-						boost::asio::buffer(this->_message),
-						boost::bind
-								(
-										&this->handle,
-										shared_from_this()
-								)
-				);
-	}
+    boost::asio::async_write
+        (
+            this->_socket,
+            boost::asio::buffer(this->_message),
+            boost::bind
+                (
+                    &this->handle,
+                    shared_from_this()
+                )
+        );
+  }
 };
 
 class TCPServer
 {
-	boost::asio::io_context& _io_context;
-	boost::asio::ip::tcp::acceptor _acceptor;
+  boost::asio::io_context& _io_context;
+  boost::asio::ip::tcp::acceptor _acceptor;
 
-	void handle
-			(
-					TCPConnector::pointer connection,
-					const boost::system::error_code& error
-			)
-	{
-	}
+  void handle
+      (
+          TCPConnector::pointer connection,
+          const boost::system::error_code& error
+      )
+  {
+  }
 
-	void start()
-	{
-		this->_acceptor.async_accept(connection->socket(),
-				boost::bind(&this->handle, this, connection
-		boost::asio::placeholders::error));
-	}
+  void start()
+  {
+    this->_acceptor.async_accept(connection->socket(),
+        boost::bind(&this->handle, this, connection
+    boost::asio::placeholders::error));
+  }
 
- public:
-	TCPServer(boost::asio::io_context& io_context) :
-			_io_context(io_context),
-			_acceptor
-					(
-							io_context,
-							boost::asio::ip::tcp::endpoint
-									(
-											boost::asio::ip::tcp::v4(),
-											13
-									)
-					)
-	{
-		start();
-	}
+public:
+  TCPServer(boost::asio::io_context& io_context) :
+      _io_context(io_context),
+      _acceptor
+          (
+              io_context,
+              boost::asio::ip::tcp::endpoint
+                  (
+                      boost::asio::ip::tcp::v4(),
+                      13
+                  )
+          )
+  {
+    start();
+  }
 };
 
 int main()
 {
-	try
-	{
-		boost::asio::io_context io_context;
-		TCPServer serving_tcp(io_context);
-		io_context.run();
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
+  try
+  {
+    boost::asio::io_context io_context;
+    TCPServer serving_tcp(io_context);
+    io_context.run();
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
 }
