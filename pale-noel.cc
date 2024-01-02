@@ -139,13 +139,13 @@ class IInputHandler : public IComponentCommand
     return static_cast<ResultType>(t);
   }
 
-  IComponentCommand* drag_command;
-  IComponentCommand* drop_command;
+  IComponentCommand* drag_command{};
+  IComponentCommand* drop_command{};
 
-  IComponentCommand* attack_input;
-  IComponentCommand* delay_input;
-  IComponentCommand* sustain_input;
-  IComponentCommand* release_input;
+  IComponentCommand* attack_input{};
+  IComponentCommand* delay_input{};
+  IComponentCommand* sustain_input{};
+  IComponentCommand* release_input{};
 
 public:
   void Execute(Actor& actor) override
