@@ -1,4 +1,10 @@
 #include "include/pale-noel.hh"
+
+// Math:
+#include <cmath>
+#include <ctime>
+
+// Collection:
 #include <array>
 #include <vector>
 
@@ -17,20 +23,24 @@ enum class EMaterialCondition
   Standby
 };
 
-struct Magnitude {
+struct Magnitude
+{
 };
 
-struct ShadowmapTuple {
+struct ShadowmapTuple
+{
   float x, y, z, w;
   // NOTE(Tuple): a tuple is a point if `w` is 1;
   // [...]a tuple is a vector when `w` is 0;
 };
 
-struct ShadowGeometry {
+struct ShadowGeometry
+{
   Vector2 vertices[4];
 };
 
-struct LightInfo {
+struct LightInfo
+{
   EMaterialCondition light_state;
   Vector2 position;
 
@@ -38,44 +48,52 @@ struct LightInfo {
   Rectangle bounds;
 
   float outer_radius;
-  int shadow_arguments;
+  int shadow_index;
 };
 
-struct Position {
+struct Position
+{
   Vector2 position;
 };
 
-struct Name {
+struct Name
+{
   std::string name;
 };
 
-struct Entity {
+struct Entity
+{
 };
 
-struct Collision {
+struct Collision
+{
   Rectangle dimensions;
 };
 
-struct Card {
+struct Card
+{
   Rectangle dimensions;
   Vector2 position;
 };
 
-struct Actor {
+struct Actor
+{
 };
 
-struct PlayerBundle {
+struct PlayerBundle
+{
   struct Name name;    // ID
   struct Entity entity;// Instantiation
 
   // Properties:
-  struct Collision dimension {
+  struct Collision dimension{
   };
-  struct Position position {
+  struct Position position{
   };
 };
 
-struct GridmapPlanar {
+struct GridmapPlanar
+{
   Rectangle dimensions;
   Vector2 position;
 };
@@ -83,9 +101,8 @@ struct GridmapPlanar {
 class IComponentCommand
 {
 public:
-  ~IComponentCommand()
-  {
-  }
+  ~IComponentCommand() = default;
+
   virtual void Execute(Actor& actor) = 0;
   // NOTE(virtual): `virtual` keyword helps with non-static member(s)-
   // -dynamic dispatch
@@ -138,18 +155,42 @@ public:
 
   int Handle(Actor& actor)
   {
-    auto comp = [this](T t) {
+    auto comp = [this](T t)
+    {
       this->rvalue_cast(t, t);
     };
 
-    if (is_input_active(EDragDropEvents::OnDrag)) drag_command->Execute(actor);
-    else
+    EDragDropEvents drag_drop_event;
+    EMaterialCondition material_condition;
+
+    switch (material_condition)
+    {
+    case EMaterialCondition::Active:
+    case EMaterialCondition::Dirty:
+    case EMaterialCondition::Standby:
+    default:
+      break;
+    }
+
+    switch (drag_drop_event)
+    {
+    case EDragDropEvents::DragEnter:
+    case EDragDropEvents::DragLeave:
+    case EDragDropEvents::OnDrag:
+      drag_command->Execute(actor);
+    case EDragDropEvents::OnDrop:
       drop_command->Execute(actor);
+    default:
+      break;
+    }
 
     return comp;
   }
 
-  int is_input_active(int event);
+  int is_input_active(int event)
+  {
+    return event;
+  }
   // NOTE(input handler):
   // create a strategy-command pattern for this...
 };
@@ -157,16 +198,19 @@ public:
 class AStarPathfinder
 {
 public:
-  int reconstruct_path(int from, int current)
+  static int Reconstruct_Path(int from, int current)
   {
-    std::vector<int> paths_vec = {current};
+    std::vector<int> paths_vec = { current };
 
-    while (current != from)
+    for (const auto& path : paths_vec)
     {
-      paths_vec.push_back(current);
+      if (from < current)
+        paths_vec.push_back(path);
+
+      return path;
     }
 
-    return paths_vec.size();
+    return 0;
   }
 };
 
@@ -179,7 +223,8 @@ public:
   template<typename T>
   decltype(auto) tuple_arbitrary_operand(T x, T y, T z, T w)
   {
-    auto lambda = [](T&& x, T&& y, T&& z, T&& w) {
+    auto lambda = [](T&& x, T&& y, T&& z, T&& w)
+    {
       return (x, y, z, w);
     };
     // NOTE(double ampersand): we have inferred an R-Value declaration.
@@ -215,45 +260,40 @@ class ShadowmapComposer
   std::array<LightInfo, 8> light_infos;
 
 public:
-  int _whats_tuple_w(ShadowmapTuple tuple_a, ShadowmapTuple tuple_b)
+  int W_Tuple(ShadowmapTuple tuple_a, ShadowmapTuple tuple_b)
   {
-    float stats_cond = tuple_a.w ? tuple_b.w : 0;
-    LightInfo light_info;
+    LightInfo light_info{};
     // shadowmap collision bounds goes down to 0 is-equal-to culled
 
-    std::array<float, 1> w = {0.0f};// : Angular frequency
+    std::array<float, 1> w = { 0.0f };// : Angular frequency
     std::time_t t = std::time(nullptr);
 
-    do
+    auto pathfinder = new AStarPathfinder();
+
+    for (auto shadow_index : shadowmap_tuples)
     {
-      auto pathfinder = new AStarPathfinder();
+      // Shadowmap tuples need folding maps : functional
+      Vector2 starting_amp = (Vector2){ shadow_index.x, shadow_index.y },
+          ending_amp = (Vector2){ shadow_index.x, shadow_index.y };
 
-      for (auto shadow_index : shadowmap_tuples)
-      {
-        // Shadowmap tuples need folding maps : functional
-        Vector2 starting_amp = (Vector2){shadow_index.x, shadow_index.y},
-                ending_amp = (Vector2){shadow_index.x, shadow_index.y};
+      float x = starting_amp.x
+          * std::sin(w[t - light_info.outer_radius])
+          + light_info.outer_radius;
 
-        float x = starting_amp.x
-                * std::sin(w[t - light_info.outer_radius])
-            + light_info.outer_radius;
+      float reversed_x = ending_amp.y
+          * std::cos(w[t - light_info.outer_radius])
+          + light_info.outer_radius;
 
-        float reversed_x = ending_amp.y
-                * std::cos(w[t - light_info.outer_radius])
-            + light_info.outer_radius;
-
-        pathfinder->reconstruct_path((int)x, (int)reversed_x);
-        // once each individual ray collides another, cull the stack at FIFO
-      }
-
-    } while (stats_cond == 0);
+      AStarPathfinder::Reconstruct_Path((int)x, (int)reversed_x);
+      // once each individual ray collides another, cull the stack at FIFO
+    }
     // NOTE(do-while): a do-while loop is declared here for single looping
 
-    return stats_cond;
+    return 0;
   }// NOTE(shadowmap): for each light index cast against collision-
   // -cast a shadow within the light index's rectangle collision bounds
 
-  void move_light(int index, float x, float y)
+  void Update_Light(int index, float x, float y)
   {
     light_infos[index].position.x = x;
     light_infos[index].position.y = y;
@@ -267,12 +307,27 @@ int main()
 {
   std::printf("Window Application: Pale Noel.");
 
+  auto shadowmap_composer = new ShadowmapComposer();
+  struct ShadowmapTuple active_tuple{}, dirty_tuple{}, standby_tuple{};
+  std::array<struct LightInfo, 1> shadowmap_indices = {};
+
   InitWindow(440, 320, "Pale Noel");
+
+  SetTargetFPS(24);
 
   while (!WindowShouldClose())
   {
     BeginDrawing();
+
     ClearBackground(BLANK);
+
+    shadowmap_composer->W_Tuple(active_tuple, dirty_tuple);
+
+    for (const auto& shadow : shadowmap_indices)
+      shadowmap_composer->Update_Light(shadow.shadow_index,
+          active_tuple.x,
+          active_tuple.y);
+
     EndDrawing();
   }
 
