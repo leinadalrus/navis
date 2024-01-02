@@ -1,6 +1,20 @@
 CC := gcc
 CXX := g++
-CFLAGS := -Wall -g
+CFLAGS := -fstack-clash-protection \
+					-fstack-protector-strong \
+					-ftrapv \
+					-fvtable-verify=std \
+					-mindirect-branch=thunk \
+					-mfunction-return=thunk \
+					-mmitigate-rop \
+					-Wall \
+					-Wextra \
+					-Wl,dynamicbase \
+					-Wl,nxcompat \
+					-Wl,-z,noexecstack \
+					-Wl,-z,relro,-z,now \
+					-Wpedantic \
+					-g
 
 BUILD_DIR := ./build
 LIBRARY_DIR := ./lib
