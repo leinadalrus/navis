@@ -1,3 +1,7 @@
+//
+// TODO: Refactor
+//
+
 #include "include/pale_noel.h"
 
 // Math:
@@ -61,10 +65,6 @@ struct Name
   std::string name;
 };
 
-struct Entity
-{
-};
-
 struct Collision
 {
   Rectangle dimensions;
@@ -83,7 +83,7 @@ struct Actor
 struct PlayerBundle
 {
   struct Name name;    // ID
-  struct Entity entity;// Instantiation
+  struct Actor actor;// Instantiation
 
   // Properties:
   struct Collision dimension{
@@ -92,7 +92,7 @@ struct PlayerBundle
   };
 };
 
-struct GridmapPlanar
+struct VolumetricTuple
 {
   Rectangle dimensions;
   Vector2 position;
@@ -216,8 +216,8 @@ public:
 
 class TabletopComputer
 {
-  struct GridmapPlanar planar;
-  struct ShadowmapTuple tuple;
+  struct VolumetricTuple volume;
+  struct ShadowmapTuple shadow;
 
 public:
   template<typename T>
@@ -231,20 +231,20 @@ public:
     // Note: this is different from a `declaration of an R-Value inference.`
 
     auto c = lambda.template operator()<T>(x, y, z, w);
-    this->scalar_tuple_sentinel(this->planar, this->tuple);
+    this->scalar_tuple_sentinel(this->volume, this->shadow);
 
     return c;
   }
 
   void scalar_tuple_sentinel(
-      struct GridmapPlanar _planar,
-      struct ShadowmapTuple _tuple)
+      struct VolumetricTuple _volume,
+      struct ShadowmapTuple _shadow)
   {
-    this->planar = _planar;
-    this->tuple = _tuple;
+    this->volume = _volume;
+    this->shadow = _shadow;
 
-    std::printf("Planar := \t%p", &this->planar);
-    std::printf("Tuple := \t%p", &this->tuple);
+    std::printf("Volumetric := \t%p", &this->volume);
+    std::printf("Shadow := \t%p", &this->shadow);
   }
 };
 
@@ -301,6 +301,23 @@ public:
     light_infos[index].bounds.x = x - light_infos[index].outer_radius;
     light_infos[index].bounds.y = y - light_infos[index].outer_radius;
   }
+};
+
+// NOTE(Buoyant Force): faking buoyant force with Volumetric data
+class BuoyantForceFlyweight
+{
+  VolumetricTuple volume;
+};
+
+// NOTE(Mediator):
+class BuoyantForceProxy
+{
+  VolumetricTuple volume;
+};
+
+// NOTE(Memento):
+class VolumetricEfficiencyTable
+{
 };
 
 int main()
