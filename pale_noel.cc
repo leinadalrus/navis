@@ -1,4 +1,4 @@
-#include "include/pale-noel.hh"
+#include "include/pale_noel.h"
 
 // Math:
 #include <cmath>
@@ -248,7 +248,7 @@ public:
   }
 };
 
-// NOTE(shadows): a la Inverted Lightmap
+// NOTE(shadows): a-la Inverted Lightmap
 class ShadowmapComposer
 {
   // Data:

@@ -1,5 +1,5 @@
-#ifndef PALE_NOEL_HH
-#define PALE_NOEL_HH
+#ifndef PALE_NOEL_H
+#define PALE_NOEL_H
 
 #if _WIN32 || __linux__ || __MACH__
 
@@ -24,4 +24,4 @@
 #include <raylib.h>
 #endif//  __linux__
 
-#endif// PALE_NOEL_HH
+#endif// PALE_NOEL_H

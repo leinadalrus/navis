@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(pale-noel)
+project(Pale_Noel)
 set(CMAKE_CXX_STANDARD 14)
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -11,7 +11,10 @@ endif ()
 set(CMAKE_TOOLCHAIN_FILE "C:/dev/scripts/buildsystems/vcpkg.cmake")
 
 # Add main.cpp file of project root directory as source file
-set(SOURCE_FILES ./pale-noel.cc ./src)
+set(SOURCE_FILES src)
+set(INCLUDE_FILES include/pale_noel.h)
+
+include_directories(include)
 
 # Add executable target with source files listed in SOURCE_FILES variable
-add_executable(pale-noel ${SOURCE_FILES})
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} pale_noel.cc)
