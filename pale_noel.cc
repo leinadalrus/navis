@@ -29,6 +29,7 @@ enum class EMaterialCondition
 
 struct Magnitude
 {
+  float magnitude;
 };
 
 struct ShadowmapTuple
@@ -110,13 +111,26 @@ public:
 
 class CursorClickDragCommand : IComponentCommand
 {
-  IComponentCommand* click_drag_command;
+  IComponentCommand *click_drag_command;
   EDragDropEvents drag_drop_events;
   struct Magnitude magnitude;
 
 public:
   void Execute(Actor& actor) override
   {
+  }
+
+  int Click()
+  {
+    if (this->click_drag_command)
+      return 1;
+    if (this->drag_drop_events == EDragDropEvents::OnDrop)
+      return 1;
+
+    if (this->magnitude.magnitude >= 1.0f)
+      return 1;
+
+    return 0;
   }
 };
 
@@ -127,6 +141,13 @@ class CursorDropCommand : IComponentCommand
 public:
   void Execute(Actor& actor) override
   {
+  }
+
+  int Drop()
+  {
+    if (this->drop_command != nullptr)
+      return 1;
+    return 0;
   }
 };
 
@@ -268,8 +289,6 @@ public:
     std::array<float, 1> w = { 0.0f };// : Angular frequency
     std::time_t t = std::time(nullptr);
 
-    auto pathfinder = new AStarPathfinder();
-
     for (auto shadow_index : shadowmap_tuples)
     {
       // Shadowmap tuples need folding maps : functional
@@ -301,18 +320,53 @@ public:
     light_infos[index].bounds.x = x - light_infos[index].outer_radius;
     light_infos[index].bounds.y = y - light_infos[index].outer_radius;
   }
+
+  // NOTE(Vector2) : possibly return `Vector2`
+  int ValidateActiveTuple() 
+  {
+    if (this->light_shadow_tuple.w <= 0.0f)
+      return 1;
+
+    for (auto i : this->shadow_geometry.vertices)
+    {
+      i.x = 0.0f;
+      i.y = 0.0f;
+    }
+
+    return 0;
+  }
 };
 
 // NOTE(Buoyant Force): faking buoyant force with Volumetric data
 class BuoyantForceFlyweight
 {
   VolumetricTuple volume;
+public:
+  
+  int test_volume_of_water()
+  {
+    if (this->volume.dimensions.width > 0.0f
+        && this->volume.dimensions.height > 0.0f)
+      return 1;
+
+    return 0;
+  }
 };
 
 // NOTE(Mediator):
 class BuoyantForceProxy
 {
   VolumetricTuple volume;
+
+public:
+  int test_buoyancy_of_water()
+  {
+    if (this->volume.position.x > 0.0f
+        && this->volume.position.y > 0.0f)
+      return 1;
+
+    return 0;
+  }
 };
 
 // NOTE(Memento):
@@ -338,7 +392,8 @@ int main()
 
     ClearBackground(BLANK);
 
-    shadowmap_composer->W_Tuple(active_tuple, dirty_tuple);
+    if (shadowmap_composer->W_Tuple(active_tuple, dirty_tuple) == true)
+      standby_tuple = active_tuple;
 
     for (const auto& shadow : shadowmap_indices)
       shadowmap_composer->Update_Light(shadow.shadow_index,
