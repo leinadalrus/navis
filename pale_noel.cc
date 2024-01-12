@@ -327,10 +327,11 @@ public:
     if (this->light_shadow_tuple.w <= 0.0f)
       return 1;
 
-    for (auto i : this->shadow_geometry.vertices)
+    for (auto &i : this->shadow_geometry.vertices)
     {
       i.x = 0.0f;
       i.y = 0.0f;
+      std::printf("Index value of: Shadow Geometry ->\t%p", &i);
     }
 
     return 0;

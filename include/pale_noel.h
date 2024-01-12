@@ -21,7 +21,7 @@
 #endif// _WIN32
 
 #ifdef __linux__
-#include <../ext/raylib/include/raylib.h>
+#include "../ext/raylib/include/raylib.h"
 #endif//  __linux__
 
 #endif// PALE_NOEL_H
