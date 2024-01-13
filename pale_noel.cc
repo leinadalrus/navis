@@ -1,5 +1,5 @@
 //
-// TODO: Refactor
+// modified by David on: 2024-13-01
 //
 
 #include "include/pale_noel.h"
@@ -34,7 +34,7 @@ struct Magnitude
 
 struct ShadowmapTuple
 {
-  float x, y, z, w;
+  float x, y, w;
   // NOTE(Tuple): a tuple is a point if `w` is 1;
   // [...]a tuple is a vector when `w` is 0;
 };
@@ -46,51 +46,15 @@ struct ShadowGeometry
 
 struct LightInfo
 {
-  EMaterialCondition light_state;
   Vector2 position;
-
-  RenderTexture texture_mask;
   Rectangle bounds;
 
   float outer_radius;
   int shadow_index;
 };
 
-struct Position
-{
-  Vector2 position;
-};
-
-struct Name
-{
-  std::string name;
-};
-
-struct Collision
-{
-  Rectangle dimensions;
-};
-
-struct Card
-{
-  Rectangle dimensions;
-  Vector2 position;
-};
-
 struct Actor
 {
-};
-
-struct PlayerBundle
-{
-  struct Name name;    // ID
-  struct Actor actor;// Instantiation
-
-  // Properties:
-  struct Collision dimension{
-  };
-  struct Position position{
-  };
 };
 
 struct VolumetricTuple
@@ -109,9 +73,9 @@ public:
   // -dynamic dispatch
 };
 
-class CursorClickDragCommand : IComponentCommand
+class DragCommand : IComponentCommand
 {
-  IComponentCommand *click_drag_command;
+  IComponentCommand* drag_command;
   EDragDropEvents drag_drop_events;
   struct Magnitude magnitude;
 
@@ -120,9 +84,9 @@ public:
   {
   }
 
-  int Click()
+  int Drag()
   {
-    if (this->click_drag_command)
+    if (this->drag_command)
       return 1;
     if (this->drag_drop_events == EDragDropEvents::OnDrop)
       return 1;
@@ -134,7 +98,7 @@ public:
   }
 };
 
-class CursorDropCommand : IComponentCommand
+class DropCommand : IComponentCommand
 {
   IComponentCommand* drop_command;
 
@@ -160,13 +124,8 @@ class IInputHandler : public IComponentCommand
     return static_cast<ResultType>(t);
   }
 
-  IComponentCommand* drag_command{};
-  IComponentCommand* drop_command{};
-
-  IComponentCommand* attack_input{};
-  IComponentCommand* delay_input{};
-  IComponentCommand* sustain_input{};
-  IComponentCommand* release_input{};
+  IComponentCommand &drag_command;
+  IComponentCommand &drop_command;
 
 public:
   void Execute(Actor& actor) override
@@ -198,22 +157,15 @@ public:
     case EDragDropEvents::DragEnter:
     case EDragDropEvents::DragLeave:
     case EDragDropEvents::OnDrag:
-      drag_command->Execute(actor);
+      drag_command.Execute(actor);
     case EDragDropEvents::OnDrop:
-      drop_command->Execute(actor);
+      drop_command.Execute(actor);
     default:
       break;
     }
 
     return comp;
   }
-
-  int is_input_active(int event)
-  {
-    return event;
-  }
-  // NOTE(input handler):
-  // create a strategy-command pattern for this...
 };
 
 class AStarPathfinder
@@ -241,23 +193,7 @@ class TabletopComputer
   struct ShadowmapTuple shadow;
 
 public:
-  template<typename T>
-  decltype(auto) tuple_arbitrary_operand(T x, T y, T z, T w)
-  {
-    auto lambda = [](T&& x, T&& y, T&& z, T&& w)
-    {
-      return (x, y, z, w);
-    };
-    // NOTE(double ampersand): we have inferred an R-Value declaration.
-    // Note: this is different from a `declaration of an R-Value inference.`
-
-    auto c = lambda.template operator()<T>(x, y, z, w);
-    this->scalar_tuple_sentinel(this->volume, this->shadow);
-
-    return c;
-  }
-
-  void scalar_tuple_sentinel(
+  void Reify_Tuple(
       struct VolumetricTuple _volume,
       struct ShadowmapTuple _shadow)
   {
@@ -281,7 +217,7 @@ class ShadowmapComposer
   std::array<LightInfo, 8> light_infos;
 
 public:
-  int W_Tuple(ShadowmapTuple tuple_a, ShadowmapTuple tuple_b)
+  int Conevision_Culling()
   {
     LightInfo light_info{};
     // shadowmap collision bounds goes down to 0 is-equal-to culled
@@ -320,22 +256,6 @@ public:
     light_infos[index].bounds.x = x - light_infos[index].outer_radius;
     light_infos[index].bounds.y = y - light_infos[index].outer_radius;
   }
-
-  // NOTE(Vector2) : possibly return `Vector2`
-  int ValidateActiveTuple() 
-  {
-    if (this->light_shadow_tuple.w <= 0.0f)
-      return 1;
-
-    for (auto &i : this->shadow_geometry.vertices)
-    {
-      i.x = 0.0f;
-      i.y = 0.0f;
-      std::printf("Index value of: Shadow Geometry ->\t%p", &i);
-    }
-
-    return 0;
-  }
 };
 
 // NOTE(Buoyant Force): faking buoyant force with Volumetric data
@@ -343,11 +263,16 @@ class BuoyantForceFlyweight
 {
   VolumetricTuple volume;
 public:
-  
-  int test_volume_of_water()
+
+  void init_volume(VolumetricTuple& volumetric_tuple)
   {
-    if (this->volume.dimensions.width > 0.0f
-        && this->volume.dimensions.height > 0.0f)
+    this->volume = volumetric_tuple;
+  }
+
+  int reify_volume(VolumetricTuple& volumetric_tuple) const
+  {
+    if (volumetric_tuple.dimensions.width > this->volume.dimensions.width
+        && volumetric_tuple.dimensions.height > this->volume.dimensions.height)
       return 1;
 
     return 0;
@@ -360,7 +285,12 @@ class BuoyantForceProxy
   VolumetricTuple volume;
 
 public:
-  int test_buoyancy_of_water()
+  void init_buoyancy(VolumetricTuple& volumetric_tuple)
+  {
+    this->volume = volumetric_tuple;
+  }
+
+  int reify_buoyancy() const
   {
     if (this->volume.position.x > 0.0f
         && this->volume.position.y > 0.0f)
@@ -380,7 +310,7 @@ int main()
   std::printf("Window Application: Pale Noel.");
 
   auto shadowmap_composer = new ShadowmapComposer();
-  struct ShadowmapTuple active_tuple{}, dirty_tuple{}, standby_tuple{};
+  struct ShadowmapTuple shadowmap_tuple;
   std::array<struct LightInfo, 1> shadowmap_indices = {};
 
   InitWindow(440, 320, "Pale Noel");
@@ -393,13 +323,10 @@ int main()
 
     ClearBackground(BLANK);
 
-    if (shadowmap_composer->W_Tuple(active_tuple, dirty_tuple) == true)
-      standby_tuple = active_tuple;
-
     for (const auto& shadow : shadowmap_indices)
       shadowmap_composer->Update_Light(shadow.shadow_index,
-          active_tuple.x,
-          active_tuple.y);
+          shadowmap_tuple.x,
+          shadowmap_tuple.y);
 
     EndDrawing();
   }
