@@ -53,10 +53,6 @@ struct LightInfo
   int shadow_index;
 };
 
-struct Actor
-{
-};
-
 struct VolumetricTuple
 {
   Rectangle dimensions;
@@ -68,7 +64,7 @@ class IComponentCommand
 public:
   ~IComponentCommand() = default;
 
-  virtual void Execute(Actor& actor) = 0;
+  virtual void Execute() = 0;
   // NOTE(virtual): `virtual` keyword helps with non-static member(s)-
   // -dynamic dispatch
 };
@@ -80,7 +76,7 @@ class DragCommand : IComponentCommand
   struct Magnitude magnitude;
 
 public:
-  void Execute(Actor& actor) override
+  void Execute() override
   {
   }
 
@@ -103,7 +99,7 @@ class DropCommand : IComponentCommand
   IComponentCommand* drop_command;
 
 public:
-  void Execute(Actor& actor) override
+  void Execute() override
   {
   }
 
@@ -128,12 +124,12 @@ class IInputHandler : public IComponentCommand
   IComponentCommand &drop_command;
 
 public:
-  void Execute(Actor& actor) override
+  void Execute() override
   {
     IInputHandler::Handle();
   }
 
-  int Handle(Actor& actor)
+  int Handle()
   {
     auto comp = [this](T t)
     {
@@ -157,9 +153,9 @@ public:
     case EDragDropEvents::DragEnter:
     case EDragDropEvents::DragLeave:
     case EDragDropEvents::OnDrag:
-      drag_command.Execute(actor);
+      drag_command.Execute();
     case EDragDropEvents::OnDrop:
-      drop_command.Execute(actor);
+      drop_command.Execute();
     default:
       break;
     }
@@ -208,10 +204,6 @@ public:
 // NOTE(shadows): a-la Inverted Lightmap
 class ShadowmapComposer
 {
-  // Data:
-  ShadowmapTuple light_shadow_tuple;
-  ShadowGeometry shadow_geometry;
-
   // Collections:
   std::array<ShadowmapTuple, 8> shadowmap_tuples;
   std::array<LightInfo, 8> light_infos;
@@ -303,6 +295,25 @@ public:
 // NOTE(Memento):
 class VolumetricEfficiencyTable
 {
+  BuoyantForceFlyweight  buoyant_flyweight;
+  BuoyantForceProxy forces_proxy;
+
+public:
+  VolumetricEfficiencyTable(
+      BuoyantForceFlyweight flyweight,
+      BuoyantForceProxy proxy
+  )
+  {
+    this->buoyant_flyweight = flyweight;
+    this->forces_proxy = proxy;
+  }
+
+  int Update_VEff_Table()
+  {
+    // NOTE(tuples): observe VolumetricTuple[s]-
+    // -against Buoyancy Forces
+    return 0;
+  }
 };
 
 int main()
@@ -312,6 +323,9 @@ int main()
   auto shadowmap_composer = new ShadowmapComposer();
   struct ShadowmapTuple shadowmap_tuple;
   std::array<struct LightInfo, 1> shadowmap_indices = {};
+
+  BuoyantForceFlyweight buoyant_flyweight;
+  BuoyantForceProxy buoyant_proxy;
 
   InitWindow(440, 320, "Pale Noel");
 
@@ -323,10 +337,17 @@ int main()
 
     ClearBackground(BLANK);
 
-    for (const auto& shadow : shadowmap_indices)
+    VolumetricEfficiencyTable *veff_table = new VolumetricEfficiencyTable(
+                                               buoyant_flyweight,
+                                               buoyant_proxy
+                                               );
+
+    for (auto &shadow : shadowmap_indices)
       shadowmap_composer->Update_Light(shadow.shadow_index,
           shadowmap_tuple.x,
           shadowmap_tuple.y);
+
+    veff_table->Update_VEff_Table();
 
     EndDrawing();
   }
