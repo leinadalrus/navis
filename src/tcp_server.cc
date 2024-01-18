@@ -7,7 +7,7 @@
 #endif
 
 #if __linux__
-#include <boost/asio.hpp>
+#include </usr/include/boost/asio.hpp>
 #endif
 
 // STL: General
@@ -17,13 +17,15 @@
 
 // STL: Memory Management
 #include <condition_variable>
+#include <ctime>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <typeinfo>
 #include <vector>
 
-class TCPConnector : public boost::enable_shared_from_this<TCPConnector>
+class TCPConnector : public std::enable_shared_from_this<TCPConnector>
 {
   boost::asio::ip::tcp::socket _socket;
   std::string _message;
@@ -32,12 +34,14 @@ class TCPConnector : public boost::enable_shared_from_this<TCPConnector>
   {
   }
 
-  void handle()
-  {
-  }
-
 public:
   typedef boost::shared_ptr<TCPConnector> pointer;
+
+  static void handle()
+  {
+    boost::asio::placeholders::error;
+    boost::asio::placeholders::bytes_transferred;
+  }
 
   static pointer create(boost::asio::io_context& io_context)
   {
@@ -53,16 +57,11 @@ public:
   {
     this->_message = "";
 
-    boost::asio::async_write
-        (
-            this->_socket,
-            boost::asio::buffer(this->_message),
-            boost::bind
-                (
-                    &this->handle,
-                    shared_from_this()
-                )
-        );
+    using namespace std::placeholders;
+
+    boost::asio::async_write(
+        this->_socket, boost::asio::buffer(this->_message),
+        std::bind(&TCPConnector::handle));
   }
 };
 
@@ -70,20 +69,22 @@ class TCPServer
 {
   boost::asio::io_context& _io_context;
   boost::asio::ip::tcp::acceptor _acceptor;
+  TCPConnector *_connector{};
 
   void handle
       (
-          TCPConnector::pointer connection,
+          TCPConnector::pointer vector,
           const boost::system::error_code& error
       )
   {
+    this->_connector;
+    boost::asio::placeholders::error;
   }
 
   void start()
   {
-    this->_acceptor.async_accept(connection->socket(),
-        boost::bind(&this->handle, this, connection
-    boost::asio::placeholders::error));
+    this->_acceptor.async_accept(this->_connector->socket(),
+        std::bind(&TCPConnector::handle));
   }
 
 public:
