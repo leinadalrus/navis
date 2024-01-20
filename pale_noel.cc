@@ -1,7 +1,6 @@
 //
 // modified by David on: 2024-13-01
 //
-
 #include "include/pale_noel.h"
 
 // Math:
@@ -32,14 +31,14 @@ struct Magnitude
   float magnitude;
 };
 
-struct ShadowmapTuple
+struct CollisionTuple
 {
-  float x, y, w;
+  float x, y;
   // NOTE(Tuple): a tuple is a point if `w` is 1;
   // [...]a tuple is a vector when `w` is 0;
 };
 
-struct ShadowGeometry
+struct CollisionGeometry
 {
   Vector2 vertices[4];
 };
@@ -120,8 +119,8 @@ class IInputHandler : public IComponentCommand
     return static_cast<ResultType>(t);
   }
 
-  IComponentCommand &drag_command;
-  IComponentCommand &drop_command;
+  IComponentCommand& drag_command;
+  IComponentCommand& drop_command;
 
 public:
   void Execute() override
@@ -129,13 +128,8 @@ public:
     IInputHandler::Handle();
   }
 
-  int Handle()
+  void Handle()
   {
-    auto comp = [this](T t)
-    {
-      this->rvalue_cast(t, t);
-    };
-
     EDragDropEvents drag_drop_event;
     EMaterialCondition material_condition;
 
@@ -159,8 +153,6 @@ public:
     default:
       break;
     }
-
-    return comp;
   }
 };
 
@@ -186,40 +178,40 @@ public:
 class TabletopComputer
 {
   struct VolumetricTuple volume;
-  struct ShadowmapTuple shadow;
+  struct CollisionTuple shadow;
 
 public:
   void Reify_Tuple(
       struct VolumetricTuple _volume,
-      struct ShadowmapTuple _shadow)
+      struct CollisionTuple _shadow)
   {
     this->volume = _volume;
     this->shadow = _shadow;
 
     std::printf("Volumetric := \t%p", &this->volume);
-    std::printf("Shadow := \t%p", &this->shadow);
+    std::printf("Collision := \t%p", &this->shadow);
   }
 };
 
-// NOTE(shadows): a-la Inverted Lightmap
-class ShadowmapComposer
+// NOTE(shadows): a-la Inverted Collision
+class CollisionComposer
 {
   // Collections:
-  std::array<ShadowmapTuple, 8> shadowmap_tuples;
+  std::array<CollisionTuple, 8> collision_tuples;
   std::array<LightInfo, 8> light_infos;
 
 public:
-  int Conevision_Culling()
+  int ConeVision_Culling()
   {
     LightInfo light_info{};
-    // shadowmap collision bounds goes down to 0 is-equal-to culled
+    // collision bounds goes down to 0 is-equal-to culled
 
     std::array<float, 1> w = { 0.0f };// : Angular frequency
     std::time_t t = std::time(nullptr);
 
-    for (auto shadow_index : shadowmap_tuples)
+    for (auto shadow_index : collision_tuples)
     {
-      // Shadowmap tuples need folding maps : functional
+      // Collision tuples need folding maps : functional
       Vector2 starting_amp = (Vector2){ shadow_index.x, shadow_index.y },
           ending_amp = (Vector2){ shadow_index.x, shadow_index.y };
 
@@ -237,7 +229,7 @@ public:
     // NOTE(do-while): a do-while loop is declared here for single looping
 
     return 0;
-  }// NOTE(shadowmap): for each light index cast against collision-
+  }// NOTE(collision): for each light index cast against collision-
   // -cast a shadow within the light index's rectangle collision bounds
 
   void Update_Light(int index, float x, float y)
@@ -295,8 +287,8 @@ public:
 // NOTE(Memento):
 class VolumetricEfficiencyTable
 {
-  BuoyantForceFlyweight  buoyant_flyweight;
-  BuoyantForceProxy forces_proxy;
+  BuoyantForceFlyweight buoyant_flyweight{};
+  BuoyantForceProxy forces_proxy{};
 
 public:
   VolumetricEfficiencyTable(
@@ -308,10 +300,17 @@ public:
     this->forces_proxy = proxy;
   }
 
-  int Update_VEff_Table()
+  ~VolumetricEfficiencyTable() = default;
+
+  static int Update_VEff_Table(VolumetricEfficiencyTable *eff_table)
   {
     // NOTE(tuples): observe VolumetricTuple[s]-
     // -against Buoyancy Forces
+    return 0;
+  }
+
+  static int Read_VEff_Table(VolumetricEfficiencyTable *eff_table)
+  {
     return 0;
   }
 };
@@ -320,12 +319,12 @@ int main()
 {
   std::printf("Window Application: Pale Noel.");
 
-  auto shadowmap_composer = new ShadowmapComposer();
-  struct ShadowmapTuple shadowmap_tuple;
-  std::array<struct LightInfo, 1> shadowmap_indices = {};
+  auto collision_composer = new CollisionComposer();
+  struct CollisionTuple collision_tuple{};
+  std::array<struct LightInfo, 1> collision_indices = {};
 
-  BuoyantForceFlyweight buoyant_flyweight;
-  BuoyantForceProxy buoyant_proxy;
+  BuoyantForceFlyweight buoyant_flyweight{};
+  BuoyantForceProxy buoyant_proxy{};
 
   InitWindow(440, 320, "Pale Noel");
 
@@ -337,17 +336,18 @@ int main()
 
     ClearBackground(BLANK);
 
-    VolumetricEfficiencyTable *veff_table = new VolumetricEfficiencyTable(
-                                               buoyant_flyweight,
-                                               buoyant_proxy
-                                               );
+    auto* eff_table = new VolumetricEfficiencyTable(
+        buoyant_flyweight,
+        buoyant_proxy
+    );
 
-    for (auto &shadow : shadowmap_indices)
-      shadowmap_composer->Update_Light(shadow.shadow_index,
-          shadowmap_tuple.x,
-          shadowmap_tuple.y);
+    for (auto& shadow : collision_indices)
+      collision_composer->Update_Light(shadow.shadow_index,
+          collision_tuple.x,
+          collision_tuple.y);
 
-    veff_table->Update_VEff_Table();
+    VolumetricEfficiencyTable::Read_VEff_Table(eff_table);
+    VolumetricEfficiencyTable::Update_VEff_Table(eff_table);
 
     EndDrawing();
   }
