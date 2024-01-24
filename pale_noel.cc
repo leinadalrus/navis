@@ -26,6 +26,26 @@ enum class EMaterialCondition
   Standby
 };
 
+enum class CellCorners
+{
+  IOTA = 0b0000,
+  BOTTOM_LEFT_CORNER = 0b0001,
+  BOTTOM_RIGHT_CORNER = 0b0010,
+  BOTTOM_CORNERS = 0b0011,
+  TOP_RIGHT_CORNER = 0b0100,
+  POSITIVE_DIAGONAL_ANGLE = 0b0101,
+  RIGHT_FACE_VERTICES = 0b0110,
+  POSITIVE_RIGHT_ANGLE_VERTICES = 0b0111,
+  TOP_LEFT_CORNER = 0b1000,
+  LEFT_FACE_VERTICES = 0b1001,
+  NEGATIVE_DIAGONAL_ANGLE = 0b1010,
+  NEGATIVE_RIGHT_ANGLE_VERTICES = 0b1011,
+  NORTH_FACE_ENCOMPASSING = 0b1100,
+  NORTH_WEST_ENCOMPASSING = 0b1101,
+  NORTH_EAST_ENCOMPASSING = 0b1110,
+  ALL_FACES_ENCOMPASSING = 0b1111
+};
+
 struct Magnitude
 {
   float magnitude;
@@ -156,7 +176,14 @@ public:
   }
 };
 
-class AStarPathfinder
+// NOTE(Marching Square): Planar [Gridmap]/Tuple
+class MarchingTuple
+{
+public:
+  Vector2 vertex; // : Vertex Point
+};
+
+class AStar
 {
 public:
   static int Reconstruct_Path(int from, int current)
@@ -172,24 +199,6 @@ public:
     }
 
     return 0;
-  }
-};
-
-class TabletopComputer
-{
-  struct VolumetricTuple volume;
-  struct CollisionTuple shadow;
-
-public:
-  void Reify_Tuple(
-      struct VolumetricTuple _volume,
-      struct CollisionTuple _shadow)
-  {
-    this->volume = _volume;
-    this->shadow = _shadow;
-
-    std::printf("Volumetric := \t%p", &this->volume);
-    std::printf("Collision := \t%p", &this->shadow);
   }
 };
 
@@ -223,7 +232,7 @@ public:
           * std::cos(w[t - light_info.outer_radius])
           + light_info.outer_radius;
 
-      AStarPathfinder::Reconstruct_Path((int)x, (int)reversed_x);
+      AStar::Reconstruct_Path((int)x, (int)reversed_x);
       // once each individual ray collides another, cull the stack at FIFO
     }
     // NOTE(do-while): a do-while loop is declared here for single looping
@@ -302,19 +311,38 @@ public:
 
   ~VolumetricEfficiencyTable() = default;
 
-  static int Update_VEff_Table(VolumetricEfficiencyTable *eff_table)
+  static int Update_VEff_Table(VolumetricEfficiencyTable* eff_table)
   {
     // NOTE(tuples): observe VolumetricTuple[s]-
     // -against Buoyancy Forces
     return 0;
   }
 
-  static int Read_VEff_Table(VolumetricEfficiencyTable *eff_table)
+  static int Read_VEff_Table(VolumetricEfficiencyTable* eff_table)
   {
     return 0;
   }
 };
 
+class VolumetricEfficiencyComputer
+{
+  struct VolumetricTuple volume;
+  struct CollisionTuple shadow;
+
+public:
+  void Reify_Tuple(
+      struct VolumetricTuple _volume,
+      struct CollisionTuple _shadow)
+  {
+    this->volume = _volume;
+    this->shadow = _shadow;
+
+    std::printf("Volumetric := \t%p", &this->volume);
+    std::printf("Collision := \t%p", &this->shadow);
+  }
+}; // Volumetric Efficiency data-structures must be seperate processes
+
+// Main
 int main()
 {
   std::printf("Window Application: Pale Noel.");
