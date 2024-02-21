@@ -1,4 +1,4 @@
-# Pale-Noel
+# Navis
 
 > A 2D game-application based on Rule The Waves II (2), Starsector (Starfarer)
 and Lancer TT-RPG.
